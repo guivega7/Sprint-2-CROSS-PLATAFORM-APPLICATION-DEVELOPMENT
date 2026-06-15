@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Location from 'expo-location';
 import { useAppContext } from '../context/AppContext';
 import { RootStackParamList } from '../types/navigation';
 
@@ -14,11 +15,47 @@ function NovaOcorrenciaScreen({ navigation, route }: Props) {
   const [trechoIdSelecionado, setTrechoIdSelecionado] = useState(trechoInicial || trechos[0]?.id ?? '');
   const [kmExato, setKmExato] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [tipoOcorrencia, setTipoOcorrencia] = useState('Vegetação alta na faixa de domínio');
+  const [coordenadas, setCoordenadas] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [capturandoLocalizacao, setCapturandoLocalizacao] = useState(false);
 
   const trechoSelecionado = useMemo(
     () => trechos.find((item) => item.id === trechoIdSelecionado),
     [trechos, trechoIdSelecionado],
   );
+
+  const tiposOcorrencia = [
+    'Vegetação alta na faixa de domínio',
+    'Sinalização parcialmente obstruída',
+    'Mato alto invadindo pista',
+    'Risco de queda de galhos',
+  ];
+
+  const capturarLocalizacao = async () => {
+    setCapturandoLocalizacao(true);
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert('Permissão negada', 'A localização é opcional, mas ajuda a simular a fiscalização em campo.');
+        return;
+      }
+
+      const localAtual = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      setCoordenadas({
+        latitude: localAtual.coords.latitude,
+        longitude: localAtual.coords.longitude,
+      });
+    } catch {
+      Alert.alert('Falha ao obter localização', 'Não foi possível capturar o GPS do dispositivo neste momento.');
+    } finally {
+      setCapturandoLocalizacao(false);
+    }
+  };
 
   const salvar = () => {
     const kmNumerico = Number(kmExato.replace(',', '.'));
@@ -41,14 +78,15 @@ function NovaOcorrenciaScreen({ navigation, route }: Props) {
     adicionarOcorrencia({
       trechoId: trechoSelecionado.id,
       kmExato: kmNumerico,
-      tipo: 'Ocorrência de vegetação crítica',
+      tipo: tipoOcorrencia,
       status: 'Pendente',
       dataRegistro: new Date().toISOString(),
-      descricao: descricao.trim(),
+      descricao: `${descricao.trim()}${coordenadas ? ` | GPS: ${coordenadas.latitude.toFixed(5)}, ${coordenadas.longitude.toFixed(5)}` : ''}`,
     });
 
     setKmExato('');
     setDescricao('');
+    setCoordenadas(null);
     navigation.navigate('Home');
   };
 
@@ -79,6 +117,24 @@ function NovaOcorrenciaScreen({ navigation, route }: Props) {
       />
 
       <View style={styles.formCard}>
+        <Text style={styles.inputLabel}>Tipo de ocorrência</Text>
+        <FlatList
+          data={tiposOcorrencia}
+          keyExtractor={(item) => item}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tipoList}
+          renderItem={({ item }) => {
+            const selected = item === tipoOcorrencia;
+
+            return (
+              <Pressable onPress={() => setTipoOcorrencia(item)} style={[styles.tipoChip, selected && styles.tipoChipSelected]}>
+                <Text style={[styles.tipoChipText, selected && styles.tipoChipTextSelected]}>{item}</Text>
+              </Pressable>
+            );
+          }}
+        />
+
         <Text style={styles.inputLabel}>KM Exato</Text>
         <TextInput
           value={kmExato}
@@ -100,6 +156,16 @@ function NovaOcorrenciaScreen({ navigation, route }: Props) {
           textAlignVertical="top"
           style={[styles.input, styles.textArea]}
         />
+
+        <Pressable onPress={capturarLocalizacao} style={({ pressed }) => [styles.locationButton, pressed && styles.saveButtonPressed]}>
+          <Text style={styles.locationButtonText}>{capturandoLocalizacao ? 'Capturando GPS...' : 'Usar localização do dispositivo'}</Text>
+        </Pressable>
+
+        <Text style={styles.locationNote}>
+          {coordenadas
+            ? `Localização capturada: ${coordenadas.latitude.toFixed(5)}, ${coordenadas.longitude.toFixed(5)}`
+            : 'A localização é opcional, mas ajuda a registrar o ponto exato da ocorrência.'}
+        </Text>
 
         <Pressable onPress={salvar} style={({ pressed }) => [styles.saveButton, pressed && styles.saveButtonPressed]}>
           <Text style={styles.saveButtonText}>Salvar</Text>
@@ -178,6 +244,31 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
+  tipoList: {
+    gap: 10,
+    paddingBottom: 10,
+  },
+  tipoChip: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D9E1EA',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginRight: 10,
+  },
+  tipoChipSelected: {
+    backgroundColor: '#0B1F3A',
+    borderColor: '#0B1F3A',
+  },
+  tipoChipText: {
+    color: '#0B1F3A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tipoChipTextSelected: {
+    color: '#FFFFFF',
+  },
   inputLabel: {
     color: '#0B1F3A',
     fontSize: 13,
@@ -208,6 +299,24 @@ const styles = StyleSheet.create({
   },
   saveButtonPressed: {
     opacity: 0.92,
+  },
+  locationButton: {
+    backgroundColor: '#123A63',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  locationNote: {
+    color: '#5E6B7D',
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 14,
   },
   saveButtonText: {
     color: '#0B1F3A',

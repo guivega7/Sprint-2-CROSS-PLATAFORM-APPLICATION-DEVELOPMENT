@@ -6,6 +6,14 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "A localização é usada para registrar ocorrências e inspeções nos trechos da CCR Motiva."
+        }
+      ]
+    ],
     "splash": {
       "backgroundColor": "#0B1F3A"
     },

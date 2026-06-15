@@ -16,11 +16,12 @@ const statusStyles = {
 
 function HomeScreen({ navigation }: Props) {
   const { top } = useSafeAreaInsets();
-  const { trechos, ocorrencias } = useAppContext();
+  const { trechos, ocorrencias, inspecoes } = useAppContext();
 
   const totalCriticos = trechos.filter((trecho) => trecho.statusVegetacao === 'Crítico').length;
   const totalAtenção = trechos.filter((trecho) => trecho.statusVegetacao === 'Atenção').length;
   const totalOcorrencias = ocorrencias.length;
+  const totalInspecoes = inspecoes.length;
 
   const renderTrecho = ({ item }: { item: Trecho }) => {
     const statusConfig = statusStyles[item.statusVegetacao];
@@ -69,8 +70,8 @@ function HomeScreen({ navigation }: Props) {
             <Text style={styles.summaryLabel}>Trechos</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{totalOcorrencias}</Text>
-            <Text style={styles.summaryLabel}>Ocorrências</Text>
+            <Text style={styles.summaryValue}>{totalInspecoes}</Text>
+            <Text style={styles.summaryLabel}>Inspeções</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{totalCriticos}</Text>
@@ -79,6 +80,10 @@ function HomeScreen({ navigation }: Props) {
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{totalAtenção}</Text>
             <Text style={styles.summaryLabel}>Atenção</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryValue}>{totalOcorrencias}</Text>
+            <Text style={styles.summaryLabel}>Ocorrências</Text>
           </View>
         </View>
       </View>

@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { Ocorrencia, StatusOcorrencia, Trecho, ocorrenciasMock, trechosMock } from '../mock/dadosMock';
+import {
+  Inspecao,
+  Ocorrencia,
+  StatusOcorrencia,
+  StatusVegetacao,
+  Trecho,
+  inspecoesMock,
+  ocorrenciasMock,
+  trechosMock,
+} from '../mock/dadosMock';
 
 interface NovaOcorrenciaInput {
   trechoId: string;
@@ -10,11 +19,23 @@ interface NovaOcorrenciaInput {
   descricao: string;
 }
 
+interface NovaInspecaoInput {
+  trechoId: string;
+  responsavel: string;
+  statusVegetacao: StatusVegetacao;
+  observacao: string;
+  dataRegistro: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 interface AppContextData {
   trechos: Trecho[];
   ocorrencias: Ocorrencia[];
+  inspecoes: Inspecao[];
   adicionarOcorrencia: (nova: NovaOcorrenciaInput) => void;
   atualizarStatusOcorrencia: (id: string, novoStatus: StatusOcorrencia) => void;
+  registrarInspecao: (nova: NovaInspecaoInput) => void;
 }
 
 const AppContext = createContext<AppContextData | undefined>(undefined);
@@ -22,6 +43,7 @@ const AppContext = createContext<AppContextData | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [trechos, setTrechos] = useState<Trecho[]>(() => trechosMock.map((trecho) => ({ ...trecho })));
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>(() => ocorrenciasMock.map((ocorrencia) => ({ ...ocorrencia })));
+  const [inspecoes, setInspecoes] = useState<Inspecao[]>(() => inspecoesMock.map((inspecao) => ({ ...inspecao })));
 
   const adicionarOcorrencia = (nova: NovaOcorrenciaInput) => {
     const ocorrenciaFormatada: Ocorrencia = {
@@ -52,9 +74,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const registrarInspecao = (nova: NovaInspecaoInput) => {
+    const inspecaoFormatada: Inspecao = {
+      id: `i-${Date.now()}`,
+      trechoId: nova.trechoId,
+      dataRegistro: nova.dataRegistro,
+      responsavel: nova.responsavel,
+      statusVegetacao: nova.statusVegetacao,
+      observacao: nova.observacao,
+      latitude: nova.latitude,
+      longitude: nova.longitude,
+    };
+
+    setInspecoes((listaAtual) => [inspecaoFormatada, ...listaAtual]);
+    setTrechos((listaAtual) =>
+      listaAtual.map((trecho) =>
+        trecho.id === nova.trechoId
+          ? {
+              ...trecho,
+              statusVegetacao: nova.statusVegetacao,
+              ultimaInspecao: nova.dataRegistro,
+            }
+          : trecho,
+      ),
+    );
+  };
+
   const value = useMemo(
-    () => ({ trechos, ocorrencias, adicionarOcorrencia, atualizarStatusOcorrencia }),
-    [trechos, ocorrencias],
+    () => ({ trechos, ocorrencias, inspecoes, adicionarOcorrencia, atualizarStatusOcorrencia, registrarInspecao }),
+    [trechos, ocorrencias, inspecoes],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

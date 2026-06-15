@@ -20,7 +20,7 @@ const proximoStatus: Record<'Pendente' | 'Em Execução' | 'Concluído', 'Penden
 };
 
 function DetalhesTrechoScreen({ route }: Props) {
-  const { trechos, ocorrencias, atualizarStatusOcorrencia } = useAppContext();
+  const { trechos, ocorrencias, inspecoes, atualizarStatusOcorrencia, registrarInspecao } = useAppContext();
   const trecho = trechos.find((item) => item.id === route.params.trechoId);
 
   if (!trecho) {
@@ -33,7 +33,28 @@ function DetalhesTrechoScreen({ route }: Props) {
   }
 
   const ocorrenciasDoTrecho = ocorrencias.filter((item) => item.trechoId === trecho.id);
+  const inspecoesDoTrecho = inspecoes.filter((item) => item.trechoId === trecho.id);
   const statusConfig = statusStyles[trecho.statusVegetacao];
+
+  const registrarInspecaoPreventiva = () => {
+    const proximoStatusVegetacao: Record<'Normal' | 'Atenção' | 'Crítico', 'Normal' | 'Atenção' | 'Crítico'> = {
+      Normal: 'Normal',
+      Atenção: 'Normal',
+      Crítico: 'Atenção',
+    };
+
+    registrarInspecao({
+      trechoId: trecho.id,
+      responsavel: 'Equipe de inspeção em campo',
+      statusVegetacao: proximoStatusVegetacao[trecho.statusVegetacao],
+      observacao: 'Inspeção preventiva registrada via app com atualização do status operacional do trecho.',
+      dataRegistro: new Date().toISOString(),
+      latitude: -23.5489,
+      longitude: -46.6388,
+    });
+
+    Alert.alert('Inspeção registrada', 'O trecho foi atualizado com base na inspeção preventiva simulada.');
+  };
 
   const avançarStatus = (ocorrencia: Ocorrencia) => {
     const novoStatus = proximoStatus[ocorrencia.status];
@@ -83,6 +104,9 @@ function DetalhesTrechoScreen({ route }: Props) {
           <Text style={styles.badgeText}>{statusConfig.label}</Text>
         </View>
         <Text style={styles.inspecao}>{`Última inspeção: ${new Date(trecho.ultimaInspecao).toLocaleString('pt-BR')}`}</Text>
+        <Pressable style={({ pressed }) => [styles.inspectButton, pressed && styles.inspectButtonPressed]} onPress={registrarInspecaoPreventiva}>
+          <Text style={styles.inspectButtonText}>Registrar inspeção preventiva</Text>
+        </Pressable>
       </View>
 
       <View style={styles.sectionHeader}>
@@ -99,6 +123,38 @@ function DetalhesTrechoScreen({ route }: Props) {
           <View style={styles.emptyStateCard}>
             <Text style={styles.emptyStateTitle}>Nenhuma ocorrência registrada</Text>
             <Text style={styles.emptyStateText}>Este trecho ainda não possui registros vinculados no mock.</Text>
+          </View>
+        }
+        ListFooterComponent={
+          <View>
+            <View style={styles.historyHeader}>
+              <Text style={styles.sectionTitle}>Histórico de inspeções</Text>
+              <Text style={styles.sectionCount}>{inspecoesDoTrecho.length}</Text>
+            </View>
+
+            <View style={styles.historyList}>
+              {inspecoesDoTrecho.length === 0 ? (
+                <View style={styles.emptyStateCard}>
+                  <Text style={styles.emptyStateTitle}>Nenhuma inspeção registrada</Text>
+                  <Text style={styles.emptyStateText}>Use a ação de inspeção preventiva para criar o primeiro registro no histórico.</Text>
+                </View>
+              ) : (
+                inspecoesDoTrecho.map((item) => (
+                  <View key={item.id} style={styles.historyCard}>
+                    <View style={styles.historyRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.historyTitle}>{item.responsavel}</Text>
+                        <Text style={styles.historyMeta}>{new Date(item.dataRegistro).toLocaleString('pt-BR')}</Text>
+                      </View>
+                      <View style={[styles.statusTag, item.statusVegetacao === 'Normal' && styles.statusConcluido, item.statusVegetacao === 'Atenção' && styles.statusExecucao, item.statusVegetacao === 'Crítico' && styles.statusPendente]}>
+                        <Text style={styles.statusTagText}>{item.statusVegetacao}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.historyText}>{item.observacao}</Text>
+                  </View>
+                ))
+              )}
+            </View>
           </View>
         }
         showsVerticalScrollIndicator={false}
@@ -136,6 +192,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 12,
     lineHeight: 18,
+  },
+  inspectButton: {
+    marginTop: 14,
+    backgroundColor: '#D4A017',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  inspectButtonPressed: {
+    opacity: 0.92,
+  },
+  inspectButtonText: {
+    color: '#0B1F3A',
+    fontSize: 13,
+    fontWeight: '900',
   },
   badge: {
     alignSelf: 'flex-start',
@@ -254,6 +325,51 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     color: '#5E6B7D',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  historyList: {
+    gap: 12,
+    paddingBottom: 24,
+  },
+  historyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E4E9F0',
+    shadowColor: '#0B1F3A',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  historyTitle: {
+    color: '#0B1F3A',
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  historyMeta: {
+    color: '#6B778C',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  historyText: {
+    color: '#3C4A5C',
     fontSize: 13,
     lineHeight: 20,
   },

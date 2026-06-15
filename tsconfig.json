@@ -3,7 +3,9 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2020"],
+    "lib": [
+      "ES2020"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "allowSyntheticDefaultImports": true,
@@ -12,5 +14,10 @@
     "resolveJsonModule": true,
     "noEmit": true
   },
-  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "App.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "extends": "expo/tsconfig.base"
 }

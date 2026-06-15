@@ -20,6 +20,17 @@ export interface Ocorrencia {
   descricao: string;
 }
 
+export interface Inspecao {
+  id: string;
+  trechoId: string;
+  dataRegistro: string;
+  responsavel: string;
+  statusVegetacao: StatusVegetacao;
+  observacao: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 export const trechosMock: Trecho[] = [
   {
     id: 't1',
@@ -99,5 +110,38 @@ export const ocorrenciasMock: Ocorrencia[] = [
     status: 'Concluído',
     dataRegistro: '2026-06-10T11:15:00.000Z',
     descricao: 'Intervenção concluída após roçada preventiva no entorno do km 27.',
+  },
+];
+
+export const inspecoesMock: Inspecao[] = [
+  {
+    id: 'i1',
+    trechoId: 't3',
+    dataRegistro: '2026-06-12T14:45:00.000Z',
+    responsavel: 'Equipe de inspeção CCR Motiva',
+    statusVegetacao: 'Crítico',
+    observacao: 'Vegetação densa em faixa de domínio e presença de obstrução parcial da sinalização vertical.',
+    latitude: -23.5489,
+    longitude: -46.6388,
+  },
+  {
+    id: 'i2',
+    trechoId: 't2',
+    dataRegistro: '2026-06-11T10:05:00.000Z',
+    responsavel: 'Fiscalização operacional',
+    statusVegetacao: 'Atenção',
+    observacao: 'Aumento de volume vegetativo após chuva intensa no km 41.',
+    latitude: -23.5072,
+    longitude: -47.4583,
+  },
+  {
+    id: 'i3',
+    trechoId: 't1',
+    dataRegistro: '2026-06-10T08:20:00.000Z',
+    responsavel: 'Equipe de conservação',
+    statusVegetacao: 'Normal',
+    observacao: 'Inspeção preventiva com faixa de domínio dentro do padrão operacional.',
+    latitude: -23.6301,
+    longitude: -46.9574,
   },
 ];
