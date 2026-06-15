@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Sprint 2 CCR Motiva",
+    "slug": "sprint-2-ccr-motiva",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0B1F3A"
+    },
+    "assetBundlePatterns": ["**/*"]
+  }
+}
